@@ -17,6 +17,24 @@ fn main() {
             sql: "CREATE TABLE IF NOT EXISTS sizes (id INTEGER PRIMARY KEY, length INTEGER, thickness INTEGER, type TEXT)",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 2,
+            description: "drop_size_types",
+            sql: "DROP TABLE IF EXISTS size_types",
+            kind: MigrationKind::Down,
+        },
+        Migration {
+            version: 3,
+            description: "create_size_types",
+            sql: "CREATE TABLE IF NOT EXISTS size_types (id INTEGER PRIMARY KEY, code TEXT, name TEXT)",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 4,
+            description: "add_size_types",
+            sql: "INSERT INTO size_types (id, code, name) VALUES (1, 'L', 'Любой'), (2, 'S', 'Суммарный'), (3, 'M', 'Медленный'), (4, 'B', 'Большой')",
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
