@@ -17,9 +17,10 @@ interface Sizes {
   onAdd: () => void;
   loadSizes: () => void;
   insertSize: (size: Size) => void;
+  getSize: (id: number) => Size | undefined;
 }
 
-export const useSizes = create<Sizes>((set) => ({
+export const useSizes = create<Sizes>((set, get) => ({
   isLoading: false,
   items: [],
   isAddFormOpen: false,
@@ -40,4 +41,5 @@ export const useSizes = create<Sizes>((set) => ({
     const items = await db.select<Size[]>("SELECT * FROM sizes");
     set({ items, isLoading: false });
   },
+  getSize: (id) => get().items.find((item) => item.id === id),
 }));

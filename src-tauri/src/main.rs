@@ -35,6 +35,12 @@ fn main() {
             sql: "INSERT INTO size_types (id, code, name) VALUES (1, 'L', 'Любой'), (2, 'S', 'Суммарный'), (3, 'M', 'Медленный'), (4, 'B', 'Большой')",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "create_orders_table",
+            sql: "CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY, order_number TEXT, pipe_weight INTEGER, order_weight INTEGER, size_id INTEGER, status TEXT, FOREIGN KEY (size_id) REFERENCES sizes (id))",
+            kind: MigrationKind::Up,
+        }
     ];
 
     tauri::Builder::default()

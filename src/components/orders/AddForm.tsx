@@ -1,37 +1,33 @@
+import { useForm } from "@tanstack/react-form";
+import { Order, useOrders } from "../../stores/orders";
+import { useEffect } from "react";
+import dayjs from "dayjs";
+import { useSizes } from "../../stores/sizes";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Button,
   Input,
-  Select,
-  SelectItem,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
 } from "@nextui-org/react";
-import { Size, useSizes } from "../../stores/sizes";
-import { useForm } from "@tanstack/react-form";
-import { useSizeTypes } from "../../stores/size_types";
 
-import { useEffect } from "react";
+export const AddOrderForm = () => {
+  const isAddFormOpen = useOrders((state) => state.isAddFormOpen);
+  const onCancelAdd = useOrders((state) => state.onCancelAdd);
+  const addingSizeId = useOrders((state) => state.addingSizeId);
+  const isInsertingOrder = useOrders((state) => state.isInsertingOrder);
+  const insertOrder = useOrders((state) => state.insertOrder);
+  const getSize = useSizes((state) => state.getSize);
 
-export function AddSizeForm() {
-  const isAddFormOpen = useSizes((state) => state.isAddFormOpen);
-  const onCancelAdd = useSizes((state) => state.onCancelAdd);
-  const sizeTypes = useSizeTypes((state) => state.items);
-  const loadSizeTypes = useSizeTypes((state) => state.loadSizeTypes);
-  const isInsertingSize = useSizes((state) => state.isInsertingSize);
-  const insertSize = useSizes((state) => state.insertSize);
-
-  useEffect(() => {
-    loadSizeTypes();
-  }, []);
-
-  const form = useForm<Size>({
+  const form = useForm<Order>({
     defaultValues: {
-      length: 0,
-      thickness: 0,
-      type: "",
+      order_number: "",
+      pipe_weight: 0,
+      order_weight: 0,
+      size_id: addingSizeId ?? 0,
+      status: "new",
     },
     onSubmit: async ({ value, formApi }) => {
       // Do something with form data
@@ -40,24 +36,39 @@ export function AddSizeForm() {
         ...value,
       };
       formApi.reset();
-      insertSize(values);
+      insertOrder(values);
     },
     validators: {
       // Add validators to the form the same way you would add them to a field
       onChange({ value }) {
-        if (value.length < 0) {
-          return "Длина должна быть больше 0";
+        if (value.pipe_weight < 0) {
+          return "Необходимо указать вес вращающегося потока";
         }
-        if (value.thickness < 0) {
-          return "Толщина должна быть больше 0";
-        }
-
-        if (value.type === "") {
-          return "Тип не может быть пустым";
+        if (value.order_weight < 0) {
+          return "Необходимо указать вес заказа";
         }
       },
     },
   });
+
+  const loadSize = async () => {
+    const size = getSize(addingSizeId!);
+    if (size) {
+      form.setFieldValue(
+        "order_number",
+        `${dayjs().format("YY")}-${dayjs().format("DDMM")}${(
+          size.length / 10
+        ).toFixed(0)}${size.thickness * 1000}`
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (addingSizeId) {
+      loadSize();
+    }
+  }, [addingSizeId]);
+
   return (
     <Modal backdrop="blur" isOpen={isAddFormOpen} onClose={onCancelAdd}>
       <form
@@ -70,15 +81,15 @@ export function AddSizeForm() {
         <ModalContent>
           <>
             <ModalHeader className="flex flex-col gap-1">
-              Добавить размер
+              Добавить заказ
             </ModalHeader>
             <ModalBody className="flex flex-col gap-1 space-y-2">
-              <form.Field name="length">
+              <form.Field name="pipe_weight">
                 {(field) => (
                   <Input
                     name={field.name}
-                    label="Длина"
-                    placeholder="Длина"
+                    label="Размер трубки"
+                    placeholder="Размер трубки"
                     type="number"
                     value={
                       typeof field.state.value === "number"
@@ -93,16 +104,16 @@ export function AddSizeForm() {
                       field.state.meta.errors?.length > 0 ? "danger" : "primary"
                     }
                     errorMessage={field.state.meta.errors?.[0]}
-                    endContent="мм"
+                    endContent="кг"
                   />
                 )}
               </form.Field>
-              <form.Field name="thickness">
+              <form.Field name="order_weight">
                 {(field) => (
                   <Input
                     name={field.name}
-                    label="Толщина"
-                    placeholder="Толщина"
+                    label="Вес заказа"
+                    placeholder="Вес заказа"
                     type="number"
                     value={
                       typeof field.state.value === "number"
@@ -117,32 +128,8 @@ export function AddSizeForm() {
                       field.state.meta.errors?.length > 0 ? "danger" : "primary"
                     }
                     errorMessage={field.state.meta.errors?.[0]}
-                    endContent="мм"
+                    endContent="кг"
                   />
-                )}
-              </form.Field>
-              <form.Field name="type">
-                {(field) => (
-                  <Select
-                    name={field.name}
-                    label="Тип"
-                    placeholder="Тип"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    variant="bordered"
-                    isInvalid={field.state.meta.errors?.length > 0}
-                    color={
-                      field.state.meta.errors?.length > 0 ? "danger" : "primary"
-                    }
-                    errorMessage={field.state.meta.errors?.[0]}
-                  >
-                    {sizeTypes.map((type) => (
-                      <SelectItem key={type.code} value={type.code}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </Select>
                 )}
               </form.Field>
             </ModalBody>
@@ -150,8 +137,8 @@ export function AddSizeForm() {
               <Button
                 color="primary"
                 type="submit"
-                disabled={isInsertingSize}
-                isLoading={isInsertingSize}
+                disabled={isInsertingOrder}
+                isLoading={isInsertingOrder}
               >
                 Добавить
               </Button>
@@ -162,4 +149,4 @@ export function AddSizeForm() {
       </form>
     </Modal>
   );
-}
+};

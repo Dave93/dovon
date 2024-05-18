@@ -12,14 +12,19 @@ import {
 import { Plus } from "lucide-react";
 import { NextUIProvider } from "@nextui-org/react";
 import { AddSizeForm } from "./components/sizes/AddForm";
+import { useOrders } from "./stores/orders";
+import { OrderCard } from "./components/orders/OrderCard";
+import { AddOrderForm } from "./components/orders/AddForm";
 
 function App() {
   const isSizesLoading = useSizes((state) => state.isLoading);
   const sizes = useSizes((state) => state.items);
   const loadSizes = useSizes((state) => state.loadSizes);
   const onAdd = useSizes((state) => state.onAdd);
+  const loadOrders = useOrders((state) => state.loadOrders);
 
   useEffect(() => {
+    loadOrders();
     loadSizes();
   }, []);
   return (
@@ -33,7 +38,7 @@ function App() {
         {!isSizesLoading && sizes.length == 0 && (
           <div className="w-full flex flex-col space-y-4 items-center justify-center h-full">
             <p className="text-center text-2xl">
-              Размеры не найдены. Добавьте их в базу данных.
+              Размеры не найдены. Добавьте их.
             </p>
             <Button color="primary" startContent={<Plus />} onClick={onAdd}>
               Добавить
@@ -52,14 +57,10 @@ function App() {
             </Button>
             <Tabs aria-label="Dynamic tabs" items={sizes}>
               {(item) => (
-                <Tab
-                  key={item.id}
-                  title={`${item.length} x ${item.thickness}`}
-                  className="h-full"
-                >
-                  <Card>
+                <Tab key={item.id} title={`${item.length} x ${item.thickness}`}>
+                  <Card className="h-[calc(100vh-6rem)]">
                     <CardBody>
-                      {item.length} x {item.thickness} {item.type}
+                      <OrderCard size={item} />
                     </CardBody>
                   </Card>
                 </Tab>
@@ -68,6 +69,7 @@ function App() {
           </div>
         )}
         <AddSizeForm />
+        <AddOrderForm />
       </div>
     </NextUIProvider>
   );
