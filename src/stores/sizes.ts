@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { db } from "../db";
+import { database } from "../db";
 
 export interface Size {
   id?: number;
@@ -28,6 +28,7 @@ export const useSizes = create<Sizes>((set, get) => ({
   onAdd: () => set({ isAddFormOpen: true }),
   isInsertingSize: false,
   insertSize: async (size) => {
+    const db = await database();
     set({ isInsertingSize: true });
     await db.execute(
       "INSERT INTO sizes (length, thickness, type) VALUES (?, ?, ?)",
@@ -37,6 +38,7 @@ export const useSizes = create<Sizes>((set, get) => ({
     set({ isInsertingSize: false, isAddFormOpen: false, items });
   },
   loadSizes: async () => {
+    const db = await database();
     set({ isLoading: true });
     const items = await db.select<Size[]>("SELECT * FROM sizes");
     set({ items, isLoading: false });

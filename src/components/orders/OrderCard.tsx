@@ -16,6 +16,7 @@ interface OrderCardProps {
 export const OrderCard: FC<OrderCardProps> = ({ size }) => {
   const getOrder = useOrders((state) => state.getOrder);
   const onAdd = useOrders((state) => state.onAdd);
+  // @ts-ignore
   const orders = useOrders((state) => state.orders);
   const order = getOrder(size.id!);
   console.log("order", order);

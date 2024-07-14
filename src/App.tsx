@@ -15,6 +15,7 @@ import { AddSizeForm } from "./components/sizes/AddForm";
 import { useOrders } from "./stores/orders";
 import { OrderCard } from "./components/orders/OrderCard";
 import { AddOrderForm } from "./components/orders/AddForm";
+import { listen } from "@tauri-apps/api/event";
 
 function App() {
   const isSizesLoading = useSizes((state) => state.isLoading);
@@ -23,9 +24,16 @@ function App() {
   const onAdd = useSizes((state) => state.onAdd);
   const loadOrders = useOrders((state) => state.loadOrders);
 
+  const listenForWeight = () => {
+    listen("weight-changed", (event) => {
+      console.log("Weight changed:", event.payload);
+    });
+  };
+
   useEffect(() => {
     loadOrders();
     loadSizes();
+    listenForWeight();
   }, []);
   return (
     <NextUIProvider>

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { db } from "../db";
+import { database } from "../db";
 
 export interface Order {
   id?: number;
@@ -38,6 +38,7 @@ export const useOrders = create<Orders>((set, get) => ({
   isInsertingOrder: false,
   insertOrder: async (order) => {
     set({ isInsertingOrder: true });
+    const db = await database();
     await db.execute(
       "INSERT INTO orders (order_number, pipe_weight, order_weight, size_id, status) VALUES (?, ?, ?, ?, ?)",
       [
@@ -48,6 +49,16 @@ export const useOrders = create<Orders>((set, get) => ({
         "new",
       ]
     );
+    const lastOrder = await db.select<Order[]>(
+      `SELECT * FROM orders WHERE size_id = ${order.size_id} ORDER BY id DESC LIMIT 1`
+    );
+    const lastOrderId = lastOrder[0].id;
+
+    await db.execute(
+      "INSERT INTO pallets (order_id, pallet_number) VALUES (?, ?)",
+      [lastOrderId, 1]
+    );
+
     const orders = await db.select<Order[]>(
       "SELECT o.*, s.length, s.thickness, s.type FROM orders o JOIN sizes s ON o.size_id = s.id WHERE status = 'new'"
     );
@@ -59,6 +70,7 @@ export const useOrders = create<Orders>((set, get) => ({
     });
   },
   loadOrders: async () => {
+    const db = await database();
     set({ isLoading: true });
     const orders = await db.select<Order[]>(
       "SELECT o.*, s.length, s.thickness, s.type FROM orders o JOIN sizes s ON o.size_id = s.id WHERE status = 'new'"
